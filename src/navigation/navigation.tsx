@@ -32,7 +32,12 @@ function MyTabs() {
           headerShown: false,
           tabBarActiveTintColor: '#25d366',
           tabBarInactiveTintColor: '#128c7e',
-          tabBarStyle: {height: 90, paddingBottom: 10},
+          tabBarStyle: {
+            height: 90,
+            paddingVertical: 10,
+            justifyContent: 'center',
+            alignItems: 'center',
+          },
           tabBarLabelStyle: {fontSize: 12, marginTop: 2},
           tabBarIcon: ({color, size}) => {
             if (route.name === 'Chats')

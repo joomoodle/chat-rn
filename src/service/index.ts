@@ -1,7 +1,7 @@
 import apisauce, {ApisauceInstance, ApiResponse} from 'apisauce';
 import {RootState, store} from '../redux/store';
 
-const BASE_URL: string = 'https://api-qa.app.midinerito.mx/api';
+const BASE_URL: string = '';
 interface ApiService {
   post<T>(endpoint: string, data: T): Promise<ApiResponse<T>>;
   get<T>(endpoint: string): Promise<ApiResponse<T>>;

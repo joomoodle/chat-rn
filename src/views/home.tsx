@@ -3,6 +3,7 @@ import {
   Dimensions,
   FlatList,
   Image,
+  Platform,
   Text,
   TextInput,
   TouchableOpacity,
@@ -35,7 +36,7 @@ export default function Home({navigation}: any) {
         justifyContent: 'center',
         alignItems: 'center',
         flexDirection: 'column',
-        paddingTop: 60,
+        paddingTop: Platform.OS == 'ios' ? 60 : 5,
         paddingHorizontal: 10,
         rowGap: 20,
       }}>
@@ -82,7 +83,6 @@ export default function Home({navigation}: any) {
           }}
         />
       </View>
-
       <FlatList
         data={users}
         renderItem={({item, index}) => {
@@ -136,7 +136,7 @@ export default function Home({navigation}: any) {
                     fontWeight: '300',
                     fontSize: 15,
                   }}>
-                  {item.lastMessage}
+                  {item?.lastMessage}
                 </Text>
               </View>
             </TouchableOpacity>

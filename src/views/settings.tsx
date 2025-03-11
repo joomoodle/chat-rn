@@ -1,6 +1,7 @@
 import {
   Dimensions,
   Image,
+  Platform,
   Text,
   TextInput,
   TouchableOpacity,
@@ -27,7 +28,7 @@ export default function Settings({navigation}: any) {
         justifyContent: 'flex-start',
         alignItems: 'center',
         flexDirection: 'column',
-        paddingTop: 100,
+        paddingTop: Platform.OS == 'ios' ? 100 : 10,
         paddingHorizontal: 10,
         rowGap: 20,
       }}>

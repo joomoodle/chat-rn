@@ -4,6 +4,7 @@ import {
   FlatList,
   Image,
   ImageBackground,
+  Platform,
   Text,
   TextInput,
   TouchableOpacity,
@@ -15,6 +16,8 @@ import * as signalR from '@microsoft/signalr';
 import {useSelector} from 'react-redux';
 import service from '../service';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import MessageItem from '../components/message-item';
+import InputMessage from '../components/input-message';
 
 const propsChat = {
   user: 'pepito',
@@ -37,7 +40,7 @@ const CustomHeader = ({navigation, name, avatar}: any) => {
         backgroundColor: 'white',
         paddingHorizontal: 10,
         paddingVertical: 10,
-        marginTop: 50,
+        marginTop: Platform.OS == 'ios' ? 50 : 0,
       }}>
       <View
         style={{
@@ -125,12 +128,12 @@ export default function Chats({navigation, route}: any) {
     };
   }, [navigation]);
 
-  useEffect(() => {
-    setTimeout(() => {
-      //@ts-ignore
-      flatListRef.current?.scrollToEnd({animated: true});
-    }, 500); // Espera a que los mensajes se rendericen
-  }, [messages]);
+  // useEffect(() => {
+  //   setTimeout(() => {
+  //     //@ts-ignore
+  //     flatListRef.current?.scrollToEnd({animated: true});
+  //   }, 500); // Espera a que los mensajes se rendericen
+  // }, [messages]);
 
   useEffect(() => {
     const connect = async () => {
@@ -191,120 +194,39 @@ export default function Chats({navigation, route}: any) {
   };
 
   return (
-    <KeyboardAwareScrollView>
+    <KeyboardAwareScrollView
+      style={{
+        flex: 1,
+      }}>
       <ImageBackground
         style={{
+          width: Dimensions.get('screen').width,
           flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
           flexDirection: 'column',
-          paddingHorizontal: 10,
-          rowGap: 20,
-          backgroundColor: 'black',
+          justifyContent: 'flex-end',
+          alignItems: 'flex-end',
+          height: Dimensions.get('screen').height - 101,
+          paddingVertical: 10,
         }}
         source={require('../assets/bg_1.jpeg')}>
         <FlatList
           ref={flatListRef}
           data={messages}
           renderItem={({item, index}) => {
-            return (
-              <View
-                style={{
-                  alignItems:
-                    item.senderId !== rest.id ? 'flex-end' : 'flex-start',
-                  width: Dimensions.get('screen').width,
-                  paddingHorizontal: 10,
-                  height: 'auto',
-                }}>
-                <TouchableOpacity
-                  style={{
-                    width: Dimensions.get('screen').width * 0.9,
-                    flexDirection: 'row',
-                    rowGap: 10,
-                    columnGap: 10,
-                    backgroundColor:
-                      item.senderId !== rest.id ? '#075e54' : '#aaaaaa',
-                    minHeight: 30,
-                    borderRadius: 10,
-                    paddingHorizontal: 6,
-                    paddingVertical: 8,
-                  }}
-                  key={index}>
-                  <Text
-                    style={{
-                      color: 'white',
-                      fontSize: 18,
-                    }}>
-                    {item.content}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            );
+            return <MessageItem rest={rest} item={item} />;
           }}
           ItemSeparatorComponent={() => <View style={{height: 20}} />}
           style={{
-            width: Dimensions.get('screen').width,
-            height: Dimensions.get('screen').height,
+            minHeight: 40,
           }}
-          onContentSizeChange={() =>
-            //@ts-ignore
-            flatListRef.current?.scrollToEnd({animated: true})
-          } // Mueve el scroll al fina
-          //@ts-ignore
-          onLayout={() => flatListRef.current?.scrollToEnd({animated: true})}
         />
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-            width: Dimensions.get('screen').width,
-            marginBottom: 25,
-            columnGap: 10,
-          }}>
-          <TextInput
-            style={{
-              paddingVertical: 10,
-              paddingHorizontal: 10,
-              width: 280,
-              backgroundColor: '#aaaaaa',
-              borderRadius: 10,
-              minHeight: 20,
-            }}
-            onChangeText={text => {
-              setMessage(text);
-            }}
-            value={message}
-          />
-          <TouchableOpacity
-            style={{
-              backgroundColor: '#25d366',
-              width: 40,
-              height: 40,
-              borderRadius: 40,
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-            disabled={message == null || message == ''}
-            onPress={async () => {
-              service
-                .post('users/chat', {
-                  Content: message,
-                  receiverId: rest.id,
-                })
-                .finally(() => {
-                  setMessages((old: any) => {
-                    return [
-                      ...old,
-                      {senderId: id, receiverId: rest.id, content: message},
-                    ];
-                  });
-                  setMessage('');
-                });
-            }}>
-            <MaterialIcons name="send" size={20} />
-          </TouchableOpacity>
-        </View>
+        <InputMessage
+          message={message}
+          setMessage={setMessage}
+          rest={rest}
+          id={id}
+          setMessages={setMessages}
+        />
       </ImageBackground>
     </KeyboardAwareScrollView>
   );
