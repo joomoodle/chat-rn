@@ -1,7 +1,8 @@
 import apisauce, {ApisauceInstance, ApiResponse} from 'apisauce';
 import {RootState, store} from '../redux/store';
+import { API_URL } from '@env';
 
-const BASE_URL: string = '';
+const BASE_URL: string = API_URL;
 interface ApiService {
   post<T>(endpoint: string, data: T): Promise<ApiResponse<T>>;
   get<T>(endpoint: string): Promise<ApiResponse<T>>;
