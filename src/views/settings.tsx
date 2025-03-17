@@ -49,17 +49,36 @@ export default function Settings({navigation}: any) {
         </Text>
         <TouchableOpacity
           onPress={async () => {
-            const result = await launchImageLibrary({
-              mediaType: 'photo',
-            });
+            if (userName) {
+              const result = await launchImageLibrary({
+                mediaType: 'photo',
+              });
 
-            if (result && result.assets) {
-              dispath(
-                setPhoto({
-                  LogoPerfil: result.assets[0].uri ?? '',
-                  NombreCompleto: '',
-                }),
-              );
+              if (result && result.assets) {
+                const file = result.assets[0];
+
+                const fileUri =
+                  Platform.OS === 'android' ? `file://${file.uri}` : file.uri;
+                dispath(
+                  setPhoto({
+                    LogoPerfil: fileUri ?? '',
+                    NombreCompleto: '',
+                  }),
+                );
+                const newForm = new FormData();
+                newForm.append('File', {
+                  uri: fileUri,
+                  type: 'image/jpeg',
+                  name: file.fileName || `photo_${Date.now()}.jpg`,
+                });
+                newForm.append('FileType', 'Text');
+                
+               await service.setHeaderForm()
+                service.post('users/upload-foto', newForm).then(res => {
+                  console.log(res)
+                });
+               await service.removeHeaderForm();
+              }
             }
           }}>
           <Image
@@ -116,6 +135,7 @@ export default function Settings({navigation}: any) {
                 email: 'juan@gmail.com',
               })
               .then(res => {
+                console.log(res)
                 //@ts-ignore
                 if (res.data && res.data?.token) {
                   dispath(

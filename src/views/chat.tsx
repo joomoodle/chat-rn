@@ -1,99 +1,21 @@
 import {useEffect, useMemo, useRef, useState} from 'react';
-import {
-  Dimensions,
-  FlatList,
-  Image,
-  ImageBackground,
-  Platform,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-//@ts-ignore
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import {Dimensions, FlatList, ImageBackground, View} from 'react-native';
 import * as signalR from '@microsoft/signalr';
-import {useSelector} from 'react-redux';
-import service from '../service';
+import {useDispatch, useSelector} from 'react-redux';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import MessageItem from '../components/message-item';
 import InputMessage from '../components/input-message';
+import {addLastMessage, addMessage} from '../redux/slice/chatSlice';
+import {CustomHeader} from '../components/heade';
 
-const propsChat = {
-  user: 'pepito',
-  avatar: require('../assets/avatar_1.png'),
-};
-
-type TChat = {
-  senderId: number;
-  content: string;
-};
-
-const CustomHeader = ({navigation, name, avatar}: any) => {
-  return (
-    <View
-      style={{
-        flexDirection: 'row',
-        width: Dimensions.get('screen').width,
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: 'white',
-        paddingHorizontal: 10,
-        paddingVertical: 10,
-        marginTop: Platform.OS == 'ios' ? 50 : 0,
-      }}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          columnGap: 10,
-        }}>
-        <TouchableOpacity
-          onPress={() => {
-            navigation.goBack();
-          }}>
-          <MaterialIcons name="arrow-back-ios" size={22} />
-        </TouchableOpacity>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-            columnGap: 10,
-          }}>
-          <Image
-            source={avatar ? avatar : propsChat.avatar}
-            style={{height: 35, width: 35, borderRadius: 50}}
-          />
-          <Text
-            style={{
-              fontWeight: 'bold',
-              fontSize: 16,
-            }}>
-            {name}
-          </Text>
-        </View>
-      </View>
-      <View
-        style={{
-          flexDirection: 'row',
-          columnGap: 20,
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}>
-        <MaterialIcons name="call" size={22} />
-        <MaterialIcons name="missed-video-call" size={28} />
-      </View>
-    </View>
-  );
-};
 export default function Chats({navigation, route}: any) {
+  const dispatch = useDispatch();
+
   const flatListRef = useRef(null);
   const {...rest} = route.params;
   const {jwtToken} = useSelector((state: any) => state.user);
   const [connection, setConnection] = useState(null);
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<Array<TChat>>([]);
 
   const id = useMemo(() => {
     if (!jwtToken) return null;
@@ -107,6 +29,12 @@ export default function Chats({navigation, route}: any) {
       return null;
     }
   }, [jwtToken]);
+
+  const allMessages = useSelector((state: any) => state.chat.messages);
+
+  const messages = useMemo(() => {
+    return allMessages[`${rest.id}_${id}`] || [];
+  }, [allMessages, rest, id]);
 
   useEffect(() => {
     navigation.getParent()?.setOptions({tabBarStyle: {display: 'none'}});
@@ -126,14 +54,18 @@ export default function Chats({navigation, route}: any) {
         .getParent()
         ?.setOptions({tabBarStyle: {height: 65, paddingBottom: 10}});
     };
-  }, [navigation]);
+  }, [navigation, rest]);
 
-  // useEffect(() => {
-  //   setTimeout(() => {
-  //     //@ts-ignore
-  //     flatListRef.current?.scrollToEnd({animated: true});
-  //   }, 500); // Espera a que los mensajes se rendericen
-  // }, [messages]);
+  useEffect(() => {
+    // Esto hará que el FlatList se desplace hasta el último mensaje
+    setTimeout(() => {
+      if (flatListRef.current) {
+        //@ts-ignore
+        flatListRef.current.scrollToEnd({ animated: true });
+      }
+    }, 100); // El retraso es opcional, puedes ajustarlo según lo que desees
+  }, [messages]);
+
 
   useEffect(() => {
     const connect = async () => {
@@ -150,18 +82,20 @@ export default function Chats({navigation, route}: any) {
       try {
         await newConnection.start();
         newConnection.on('ReceiveMessage', (senderId, message) => {
+          //@ts-ignore
           const [recive, sender] = senderId.split('_');
-          console.log({recive, sender});
+          //@ts-ignore
           if (recive == id && sender == rest.id) {
-            //@ts-ignore
-            setMessages(prevMessages => [
-              ...prevMessages,
-              {
+            dispatch(
+              addMessage({
+                id: Date.now().toString(),
+                chatId: `${rest.id}_${id}`,
                 senderId: parseInt(sender),
                 content: message,
                 receiverId: parseInt(recive),
-              },
-            ]);
+                timestamp: Date.now().toString(),
+              }),
+            );
           }
         });
 
@@ -180,18 +114,7 @@ export default function Chats({navigation, route}: any) {
         connection.stop();
       }
     };
-  }, [jwtToken]);
-
-  useEffect(() => {
-    getAllMessage();
-  }, [jwtToken]);
-
-  const getAllMessage = () => {
-    service.get(`users/messages/${rest.id}`).then(res => {
-      //@ts-ignore
-      setMessages(res.data);
-    });
-  };
+  }, [jwtToken, dispatch]);
 
   return (
     <KeyboardAwareScrollView
@@ -215,9 +138,10 @@ export default function Chats({navigation, route}: any) {
           renderItem={({item, index}) => {
             return <MessageItem rest={rest} item={item} />;
           }}
-          ItemSeparatorComponent={() => <View style={{height: 20}} />}
+          ItemSeparatorComponent={() => <View style={{height: 5}} />}
           style={{
             minHeight: 40,
+            marginBottom: 10
           }}
         />
         <InputMessage
@@ -225,7 +149,22 @@ export default function Chats({navigation, route}: any) {
           setMessage={setMessage}
           rest={rest}
           id={id}
-          setMessages={setMessages}
+          handleSend={async (message: string) => {
+            const dto = {
+              id: Date.now().toString(),
+              chatId: `${rest.id}_${id}`,
+              senderId: parseInt(id),
+              content: message,
+              receiverId: parseInt(rest.id),
+              timestamp: Date.now().toString(),
+            };
+            dispatch(addMessage(dto));
+            dispatch(addLastMessage(dto));
+            if (connection) {
+              //@ts-ignore
+              await connection.send('SendMessage', `${rest.id}_${id}`, message);
+            }
+          }}
         />
       </ImageBackground>
     </KeyboardAwareScrollView>

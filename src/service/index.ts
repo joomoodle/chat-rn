@@ -1,8 +1,8 @@
 import apisauce, {ApisauceInstance, ApiResponse} from 'apisauce';
 import {RootState, store} from '../redux/store';
-import { API_URL } from '@env';
+// import { API_URL } from '@env';
 
-const BASE_URL: string = API_URL;
+const BASE_URL: string = '';
 interface ApiService {
   post<T>(endpoint: string, data: T): Promise<ApiResponse<T>>;
   get<T>(endpoint: string): Promise<ApiResponse<T>>;
@@ -26,7 +26,7 @@ const create = (endpoint = BASE_URL): ApiService => {
 
   api.addRequestTransform((request: any) => {
     const jwt = getJwtToken();
-    if (jwt) {
+    if (jwt && !request.url.includes('users/register-user')) {
       //@ts-ignore
       request.headers.Authorization = `Bearer ${jwt}`;
     }
@@ -36,7 +36,6 @@ const create = (endpoint = BASE_URL): ApiService => {
   const put = <T>(endpoint: string, data: T) => api.put<T>(endpoint, data);
 
   const setHeaderForm = async () => {
-    api.setHeader('mimeType', 'multipart/form-data');
     api.setHeader('Content-Type', 'Multipart/form-data');
   };
 
@@ -49,7 +48,6 @@ const create = (endpoint = BASE_URL): ApiService => {
 
   const removeHeaderForm = () => {
     api.deleteHeader('Content-Type');
-    api.deleteHeader('mimeType');
   };
 
   const removeToken = () => {

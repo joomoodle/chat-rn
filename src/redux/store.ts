@@ -5,9 +5,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import rootReducer from './rootReducer';
 import {UserState} from './slice/userSlice';
+import {ChatState} from './slice/chatSlice';
 
 interface RootState {
   user: UserState;
+  chat: ChatState;
 }
 
 const persistConfig = {

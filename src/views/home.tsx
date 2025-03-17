@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useState} from 'react';
+import {useCallback, useMemo} from 'react';
 import {
   Dimensions,
   FlatList,
@@ -10,24 +10,41 @@ import {
   View,
 } from 'react-native';
 import service from '../service';
+//@ts-ignore
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {useFocusEffect} from '@react-navigation/native';
+import {useDispatch, useSelector} from 'react-redux';
+import {addUsers} from '../redux/slice/chatSlice';
 export default function Home({navigation}: any) {
-  const [users, setUsers] = useState([]);
+  const {users, lastMessages} = useSelector((state: any) => state.chat);
+  const {jwtToken} = useSelector((state: any) => state.user);
+
+  const dispath = useDispatch();
 
   useFocusEffect(
     useCallback(() => {
       service.get('users/chat-user').then(res => {
-        console.log(res);
-        //@ts-ignore
-        setUsers(res.data);
+        if (res.data) {
+          //@ts-ignore
+          dispath(addUsers(res.data));
+        }
       });
 
-      return () => {
-        // Puedes limpiar efectos aquí si es necesario
-      };
-    }, []),
+      return () => {};
+    }, [dispath]),
   );
+  const id = useMemo(() => {
+    if (!jwtToken) return null;
+    try {
+      const base64Url = jwtToken.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const decodedData = JSON.parse(atob(base64));
+      return decodedData.id;
+    } catch (error) {
+      console.error('Error decoding JWT:', error);
+      return null;
+    }
+  }, [jwtToken]);
 
   return (
     <View
@@ -86,6 +103,8 @@ export default function Home({navigation}: any) {
       <FlatList
         data={users}
         renderItem={({item, index}) => {
+          const last = lastMessages[`${item.id}_${id}`];
+
           return (
             <TouchableOpacity
               style={{
@@ -101,7 +120,10 @@ export default function Home({navigation}: any) {
               }}>
               <Image
                 source={{
-                  uri: 'https://img.freepik.com/free-psd/3d-illustration-person-with-long-hair_23-2149436197.jpg',
+                  //@ts-ignore
+                  uri: item?.avatar
+                    ? item.avatar
+                    : 'https://img.freepik.com/free-psd/3d-illustration-person-with-long-hair_23-2149436197.jpg',
                 }}
                 style={{height: 50, width: 50, borderRadius: 50}}
               />
@@ -121,6 +143,7 @@ export default function Home({navigation}: any) {
                       fontWeight: 'bold',
                       fontSize: 16,
                     }}>
+                    {/* @ts-ignore */}
                     {item.name}
                   </Text>
                   <Text
@@ -128,6 +151,7 @@ export default function Home({navigation}: any) {
                       fontWeight: '200',
                       fontSize: 12,
                     }}>
+                    {/* @ts-ignore */}
                     {item.time}
                   </Text>
                 </View>
@@ -136,7 +160,8 @@ export default function Home({navigation}: any) {
                     fontWeight: '300',
                     fontSize: 15,
                   }}>
-                  {item?.lastMessage}
+                  {/* @ts-ignore */}
+                  {last ? last?.content : ''}
                 </Text>
               </View>
             </TouchableOpacity>

@@ -1,6 +1,7 @@
 import {Dimensions, TouchableOpacity, View} from 'react-native';
 import {TextInput} from 'react-native-gesture-handler';
 import service from '../service';
+//@ts-ignore
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 export default function InputMessage({
@@ -8,7 +9,7 @@ export default function InputMessage({
   setMessage,
   rest,
   id,
-  setMessages,
+  handleSend,
 }: any) {
   return (
     <View
@@ -45,18 +46,21 @@ export default function InputMessage({
         }}
         disabled={message == null || message == ''}
         onPress={async () => {
-          setMessages((old: any) => {
-            return [
-              ...old,
-              {senderId: id, receiverId: rest.id, content: message},
-            ];
-          });
-          const dto = {
-            Content: message,
-            receiverId: rest.id,
-          };
+          // setMessages((old: any) => {
+          //   return [
+          //     ...old,
+          //     {senderId: id, receiverId: rest.id, content: message},
+          //   ];
+          // });
+          // const dto = {
+          //   Content: message,
+          //   receiverId: rest.id,
+          // };
+          // setMessage('');
+          // service.post('users/chat', dto).finally(() => {});
+
+          handleSend && handleSend(message);
           setMessage('');
-          service.post('users/chat', dto).finally(() => {});
         }}>
         <MaterialIcons name="send" size={20} />
       </TouchableOpacity>
